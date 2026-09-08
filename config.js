@@ -20,7 +20,7 @@ window.PUBLIC_ATTENDANCE_CONFIG = {
    * Địa chỉ gốc của backend API (không kèm dấu gạch chéo cuối '/')
    * Ví dụ: 'https://api.worknorm.vn' hoặc 'http://localhost:5000'
    */
-  apiBaseUrl: 'http://localhost:18080',
+  apiBaseUrl: 'https://hrms-trkhth.io.vn',
 
   /**
    * Tiêu đề hiển thị trên thanh điều hướng và tiêu đề trang
