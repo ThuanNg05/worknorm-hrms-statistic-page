@@ -24,54 +24,90 @@
   const state = {
     year: now.getFullYear(),
     month: now.getMonth() + 1,
-    searchQuery: '',
-    sortColumn: 'employeeName',
-    sortDirection: 'asc', // 'asc' | 'desc'
     items: [],
     isLoading: false,
     abortController: null,
+    isMockMode: false,
+    serverUnreachable: false,
+    lastErrorPayload: {
+      title: 'Không thể tải dữ liệu thống kê',
+      desc: 'Vui lòng kiểm tra lại kết nối mạng hoặc bật chế độ xem dữ liệu mẫu.',
+    },
   };
+
+  // Danh sách nhân viên mẫu (dùng khi không kết nối được máy chủ và người dùng bật Dữ liệu mẫu)
+  const BASE_MOCK_EMPLOYEES = [
+    { employeeName: 'Nguyễn Văn An', workedDaysThisMonth: 22, workedDaysThisYear: 196, validAbsencesThisMonth: 0, invalidAbsencesThisMonth: 0, validAbsencesThisYear: 2, invalidAbsencesThisYear: 0 },
+    { employeeName: 'Trần Thị Bích Ngọc', workedDaysThisMonth: 21, workedDaysThisYear: 192, validAbsencesThisMonth: 1, invalidAbsencesThisMonth: 0, validAbsencesThisYear: 4, invalidAbsencesThisYear: 0 },
+    { employeeName: 'Lê Hoàng Nam', workedDaysThisMonth: 20, workedDaysThisYear: 185, validAbsencesThisMonth: 1, invalidAbsencesThisMonth: 1, validAbsencesThisYear: 5, invalidAbsencesThisYear: 2 },
+    { employeeName: 'Phạm Minh Tuấn', workedDaysThisMonth: 22, workedDaysThisYear: 198, validAbsencesThisMonth: 0, invalidAbsencesThisMonth: 0, validAbsencesThisYear: 1, invalidAbsencesThisYear: 0 },
+    { employeeName: 'Hoàng Thu Trang', workedDaysThisMonth: 19, workedDaysThisYear: 180, validAbsencesThisMonth: 3, invalidAbsencesThisMonth: 0, validAbsencesThisYear: 8, invalidAbsencesThisYear: 0 },
+    { employeeName: 'Vũ Đức Thắng', workedDaysThisMonth: 21, workedDaysThisYear: 190, validAbsencesThisMonth: 0, invalidAbsencesThisMonth: 1, validAbsencesThisYear: 3, invalidAbsencesThisYear: 1 },
+    { employeeName: 'Đặng Phương Thảo', workedDaysThisMonth: 22, workedDaysThisYear: 195, validAbsencesThisMonth: 0, invalidAbsencesThisMonth: 0, validAbsencesThisYear: 3, invalidAbsencesThisYear: 0 },
+    { employeeName: 'Bùi Quốc Khánh', workedDaysThisMonth: 18, workedDaysThisYear: 174, validAbsencesThisMonth: 2, invalidAbsencesThisMonth: 2, validAbsencesThisYear: 6, invalidAbsencesThisYear: 3 },
+    { employeeName: 'Đỗ Thị Mai Hương', workedDaysThisMonth: 21, workedDaysThisYear: 191, validAbsencesThisMonth: 1, invalidAbsencesThisMonth: 0, validAbsencesThisYear: 4, invalidAbsencesThisYear: 0 },
+    { employeeName: 'Ngô Quang Huy', workedDaysThisMonth: 22, workedDaysThisYear: 197, validAbsencesThisMonth: 0, invalidAbsencesThisMonth: 0, validAbsencesThisYear: 2, invalidAbsencesThisYear: 0 },
+    { employeeName: 'Dương Thanh Tùng', workedDaysThisMonth: 20, workedDaysThisYear: 188, validAbsencesThisMonth: 2, invalidAbsencesThisMonth: 0, validAbsencesThisYear: 5, invalidAbsencesThisYear: 1 },
+    { employeeName: 'Lý Ngọc Ánh', workedDaysThisMonth: 21, workedDaysThisYear: 193, validAbsencesThisMonth: 1, invalidAbsencesThisMonth: 0, validAbsencesThisYear: 3, invalidAbsencesThisYear: 0 },
+  ];
+
+  /**
+   * Tạo dữ liệu mẫu biến thiên nhẹ theo tháng để kiểm thử bộ lọc Tháng/Năm
+   */
+  function getMockItems(year, month) {
+    const m = Math.max(1, Math.min(12, month || 1));
+    return BASE_MOCK_EMPLOYEES.map((emp, idx) => {
+      const monthOffset = ((m + idx) % 3) - 1; // -1, 0, 1
+      const workedMonth = Math.max(15, Math.min(23, emp.workedDaysThisMonth + monthOffset));
+      const workedYear = Math.max(workedMonth, Math.round((emp.workedDaysThisYear / 9) * m));
+      return {
+        employeeName: emp.employeeName,
+        workedDaysThisMonth: workedMonth,
+        workedDaysThisYear: workedYear,
+        validAbsencesThisMonth: emp.validAbsencesThisMonth,
+        invalidAbsencesThisMonth: emp.invalidAbsencesThisMonth,
+        validAbsencesThisYear: Math.max(emp.validAbsencesThisMonth, emp.validAbsencesThisYear),
+        invalidAbsencesThisYear: Math.max(emp.invalidAbsencesThisMonth, emp.invalidAbsencesThisYear),
+      };
+    });
+  }
 
   // DOM Element References
   const dom = {
     configBanner: document.getElementById('configBanner'),
-    inlineConfigForm: document.getElementById('inlineConfigForm'),
-    inlineApiBaseUrlInput: document.getElementById('inlineApiBaseUrlInput'),
 
     filterForm: document.getElementById('filterForm'),
     filterMonth: document.getElementById('filterMonth'),
     filterYear: document.getElementById('filterYear'),
-    filterSearch: document.getElementById('filterSearch'),
-    btnResetSearch: document.getElementById('btnResetSearch'),
 
     currentMonthDisplay: document.getElementById('currentMonthDisplay'),
     recordCountText: document.getElementById('recordCountText'),
+    mockStatusBadge: document.getElementById('mockStatusBadge'),
+
+    btnToggleMockData: document.getElementById('btnToggleMockData'),
+    mockModeBanner: document.getElementById('mockModeBanner'),
+    btnRetryFromMock: document.getElementById('btnRetryFromMock'),
+    btnDisableMockBanner: document.getElementById('btnDisableMockBanner'),
 
     tableWrapper: document.getElementById('tableWrapper'),
     tableBody: document.getElementById('tableBody'),
-    sortableHeaders: document.querySelectorAll('.sortable-th'),
+
+    mobileCardsWrapper: document.getElementById('mobileCardsWrapper'),
+    mobileCardList: document.getElementById('mobileCardList'),
 
     stateLoading: document.getElementById('stateLoading'),
     stateError: document.getElementById('stateError'),
     errorMessageTitle: document.getElementById('errorMessageTitle'),
     errorMessageDesc: document.getElementById('errorMessageDesc'),
     btnRetry: document.getElementById('btnRetry'),
-    btnOpenConfigFromError: document.getElementById('btnOpenConfigFromError'),
+    btnEnableMockFromError: document.getElementById('btnEnableMockFromError'),
 
     stateEmpty: document.getElementById('stateEmpty'),
     emptyMessageDesc: document.getElementById('emptyMessageDesc'),
-
-    btnOpenSettings: document.getElementById('btnOpenSettings'),
-    settingsModal: document.getElementById('settingsModal'),
-    btnCloseModal: document.getElementById('btnCloseModal'),
-    btnCancelModal: document.getElementById('btnCancelModal'),
-    modalConfigForm: document.getElementById('modalConfigForm'),
-    modalApiBaseUrlInput: document.getElementById('modalApiBaseUrlInput'),
-    btnResetConfig: document.getElementById('btnResetConfig'),
   };
 
   /**
-   * Lấy apiBaseUrl từ runtime config hoặc config.js.
+   * Lấy apiBaseUrl từ config.js.
    * KHÔNG đọc từ localStorage để tránh giữ URL cũ sai port.
    */
   function getApiBaseUrl() {
@@ -88,17 +124,6 @@
   }
 
   /**
-   * Cập nhật URL máy chủ API cho phiên hiện tại
-   */
-  function setApiBaseUrl(url) {
-    runtimeApiBaseUrl = (url || '').trim().replace(/\/+$/, '');
-    // Đảm bảo không lưu vào localStorage
-    try {
-      localStorage.removeItem(STORAGE_KEY_API_BASE);
-    } catch (_) {}
-  }
-
-  /**
    * Kiểm tra API base URL đã được cấu hình hay chưa
    */
   function isApiConfigured() {
@@ -106,9 +131,52 @@
   }
 
   /**
+   * Đồng bộ giao diện nút công tắc Dữ liệu mẫu (chỉ hiện khi không kết nối được server hoặc đang bật mock)
+   */
+  function syncMockToggleUI() {
+    if (dom.btnToggleMockData) {
+      if (state.serverUnreachable || state.isMockMode) {
+        dom.btnToggleMockData.classList.remove('hidden');
+      } else {
+        dom.btnToggleMockData.classList.add('hidden');
+      }
+      dom.btnToggleMockData.setAttribute('aria-checked', state.isMockMode ? 'true' : 'false');
+      dom.btnToggleMockData.classList.toggle('is-active', state.isMockMode);
+    }
+
+    if (dom.mockModeBanner) {
+      dom.mockModeBanner.classList.toggle('hidden', !state.isMockMode);
+    }
+
+    if (dom.mockStatusBadge) {
+      dom.mockStatusBadge.classList.toggle('hidden', !state.isMockMode);
+    }
+  }
+
+  /**
+   * Bật hoặc tắt chế độ xem dữ liệu mẫu khi không kết nối được máy chủ
+   */
+  function setMockMode(enabled) {
+    state.isMockMode = Boolean(enabled);
+    syncMockToggleUI();
+
+    if (state.isMockMode) {
+      state.items = getMockItems(state.year, state.month);
+      renderTable();
+    } else {
+      state.items = [];
+      if (state.serverUnreachable) {
+        setViewState('ERROR', state.lastErrorPayload);
+      } else {
+        fetchStatistics();
+      }
+    }
+  }
+
+  /**
    * Quản lý trạng thái giao diện LOẠI TRỪ NHAU:
    * - LOADING: chỉ hiện loading.
-   * - DATA: chỉ hiện bảng.
+   * - DATA: chỉ hiện bảng (desktop) hoặc danh sách thẻ (mobile).
    * - EMPTY: chỉ hiện empty state.
    * - ERROR: chỉ hiện error state.
    * - CONFIG_REQUIRED: chỉ hiện banner cấu hình khi chưa có URL.
@@ -117,6 +185,9 @@
     // Luôn ẩn toàn bộ các trạng thái trước để bảo đảm loại trừ nhau tuyệt đối
     dom.stateLoading.classList.add('hidden');
     dom.tableWrapper.classList.add('hidden');
+    if (dom.mobileCardsWrapper) {
+      dom.mobileCardsWrapper.classList.add('hidden');
+    }
     dom.stateEmpty.classList.add('hidden');
     dom.stateError.classList.add('hidden');
 
@@ -128,6 +199,9 @@
 
       case 'DATA':
         dom.tableWrapper.classList.remove('hidden');
+        if (dom.mobileCardsWrapper) {
+          dom.mobileCardsWrapper.classList.remove('hidden');
+        }
         break;
 
       case 'EMPTY':
@@ -142,8 +216,8 @@
       case 'ERROR':
         dom.stateError.classList.remove('hidden');
         dom.errorMessageTitle.textContent = payload.title || 'Không thể tải dữ liệu thống kê';
-        dom.errorMessageDesc.textContent = payload.desc || 'Vui lòng kiểm tra lại địa chỉ máy chủ API hoặc kết nối mạng.';
-        dom.recordCountText.textContent = 'Lỗi truy vấn';
+        dom.errorMessageDesc.textContent = payload.desc || 'Vui lòng kiểm tra lại kết nối mạng hoặc bật chế độ xem dữ liệu mẫu.';
+        dom.recordCountText.textContent = 'Không kết nối được máy chủ';
         break;
 
       case 'CONFIG_REQUIRED':
@@ -157,9 +231,18 @@
   }
 
   /**
-   * Khởi tạo giá trị ban đầu cho các ô lọc tháng/năm
+   * Khởi tạo giá trị ban đầu cho các ô chọn tháng/năm
+   * Năm: lựa chọn đầu tiên là năm hiện tại, giới hạn tối đa 5 năm tiếp theo
    */
   function initFilterInputs() {
+    const currentYear = now.getFullYear();
+    const yearOptions = [];
+    for (let offset = 0; offset <= 5; offset++) {
+      const y = currentYear + offset;
+      yearOptions.push(`<option value="${y}">Năm ${y}</option>`);
+    }
+    dom.filterYear.innerHTML = yearOptions.join('');
+
     dom.filterMonth.value = String(state.month);
     dom.filterYear.value = String(state.year);
     updateMonthDisplay();
@@ -176,12 +259,13 @@
    * Fetch dữ liệu thống kê chấm công từ endpoint public duy nhất:
    * GET {apiBaseUrl}/api/public/attendance-statistics?year={year}&month={month}
    * Không gọi endpoint HRMS khác, không token, không login.
-   * Không dùng dữ liệu demo tự động; chỉ dùng dữ liệu API thật.
    */
   async function fetchStatistics() {
     const baseUrl = getApiBaseUrl();
 
     if (!baseUrl) {
+      state.serverUnreachable = true;
+      syncMockToggleUI();
       setViewState('CONFIG_REQUIRED');
       return;
     }
@@ -196,6 +280,9 @@
 
     // Bật trạng thái LOADING (chỉ hiện loading, ẩn toàn bộ bảng, error, empty)
     state.isLoading = true;
+    if (dom.mockModeBanner) {
+      dom.mockModeBanner.classList.add('hidden');
+    }
     setViewState('LOADING');
 
     const endpoint = `${baseUrl}/api/public/attendance-statistics?year=${encodeURIComponent(state.year)}&month=${encodeURIComponent(state.month)}`;
@@ -240,6 +327,11 @@
       const data = await response.json();
       const items = Array.isArray(data.items) ? data.items : [];
 
+      // Kết nối máy chủ thành công -> tắt trạng thái lỗi và tắt chế độ dữ liệu mẫu
+      state.serverUnreachable = false;
+      state.isMockMode = false;
+      syncMockToggleUI();
+
       state.items = items;
 
       if (items.length === 0) {
@@ -254,16 +346,25 @@
     } catch (err) {
       clearTimeout(timeoutId);
 
-      // Trong catch: luôn tắt loading và hiển thị duy nhất error state
-      const title = 'Không thể tải dữ liệu thống kê';
+      // Trong catch: đánh dấu không kết nối được server để hiện nút tắt/mở Dữ liệu mẫu
+      const title = 'Không thể kết nối đến máy chủ thống kê';
       let desc = err.message;
       if (err.name === 'AbortError') {
-        desc = 'Hết thời gian chờ phản hồi (Timeout) hoặc yêu cầu đã bị hủy.';
+        desc = 'Hết thời gian chờ phản hồi (Timeout). Bạn có thể bật "Dữ liệu mẫu" để xem trước giao diện.';
       } else if (err.message && err.message.includes('Failed to fetch')) {
-        desc = `Không thể kết nối đến máy chủ API (${baseUrl}). Vui lòng kiểm tra backend đang chạy trên port 18080 và CORS đã được cho phép.`;
+        desc = `Không thể kết nối đến máy chủ API (${baseUrl}). Bạn có thể bật công tắc "Dữ liệu mẫu" để xem dữ liệu minh họa.`;
       }
 
-      setViewState('ERROR', { title, desc });
+      state.serverUnreachable = true;
+      state.lastErrorPayload = { title, desc };
+      syncMockToggleUI();
+
+      if (state.isMockMode) {
+        state.items = getMockItems(state.year, state.month);
+        renderTable();
+      } else {
+        setViewState('ERROR', { title, desc });
+      }
     } finally {
       // Trong finally: luôn đảm bảo tắt loading
       state.isLoading = false;
@@ -273,86 +374,29 @@
   }
 
   /**
-   * Lọc theo từ khóa tìm kiếm và sắp xếp cột theo hợp đồng dữ liệu:
+   * Render danh sách các dòng trong bảng thống kê (Desktop) và danh sách thẻ (Mobile)
+   * Các trường hợp đồng dữ liệu:
    * employeeName, workedDaysThisMonth, workedDaysThisYear,
    * validAbsencesThisMonth, invalidAbsencesThisMonth,
    * validAbsencesThisYear, invalidAbsencesThisYear
    */
-  function getProcessedItems() {
-    let list = state.items.slice();
-
-    // Tìm kiếm theo tên nhân viên
-    const q = state.searchQuery.trim().toLowerCase();
-    if (q) {
-      list = list.filter((item) => {
-        const name = (item.employeeName || '').toLowerCase();
-        return name.includes(q);
-      });
-    }
-
-    // Sắp xếp
-    const col = state.sortColumn;
-    const dir = state.sortDirection === 'asc' ? 1 : -1;
-
-    list.sort((a, b) => {
-      if (col === 'employeeName') {
-        const nameA = a.employeeName || '';
-        const nameB = b.employeeName || '';
-        return dir * nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
-      }
-
-      const numA = typeof a[col] === 'number' ? a[col] : 0;
-      const numB = typeof b[col] === 'number' ? b[col] : 0;
-      return dir * (numA - numB);
-    });
-
-    return list;
-  }
-
-  /**
-   * Render danh sách các dòng trong bảng thống kê
-   */
   function renderTable() {
-    const list = getProcessedItems();
+    const list = state.items;
 
     // Cập nhật nhãn số lượng nhân viên
-    const total = state.items.length;
-    const visible = list.length;
-    if (state.searchQuery.trim()) {
-      dom.recordCountText.textContent = `Hiển thị ${visible} / ${total} nhân viên`;
-    } else {
-      dom.recordCountText.textContent = `Tổng số ${total} nhân viên`;
-    }
+    const total = list.length;
+    const suffix = state.isMockMode ? ' (Mẫu)' : '';
+    dom.recordCountText.textContent = `Tổng số ${total} nhân viên${suffix}`;
 
-    // Cập nhật biểu tượng và thuộc tính sắp xếp tiêu đề
-    dom.sortableHeaders.forEach((th) => {
-      const col = th.getAttribute('data-sort');
-      const icon = th.querySelector('.sort-icon');
-      if (col === state.sortColumn) {
-        th.setAttribute('aria-sort', state.sortDirection === 'asc' ? 'ascending' : 'descending');
-        if (icon) icon.textContent = state.sortDirection === 'asc' ? '▲' : '▼';
-      } else {
-        th.setAttribute('aria-sort', 'none');
-        if (icon) icon.textContent = '⇅';
-      }
-    });
-
-    // Nếu lọc tìm kiếm không ra kết quả
     if (list.length === 0) {
-      if (state.items.length > 0) {
-        setViewState('EMPTY', {
-          desc: `Không tìm thấy nhân viên nào khớp với từ khóa "${state.searchQuery}".`,
-        });
-      } else {
-        setViewState('EMPTY');
-      }
+      setViewState('EMPTY');
       return;
     }
 
-    // Hiển thị bảng
+    // Hiển thị dữ liệu (CSS sẽ tự động hiển thị bảng trên Desktop và thẻ trên Mobile)
     setViewState('DATA');
 
-    // Tạo HTML các dòng
+    // Tạo HTML các dòng cho bảng Desktop
     const rowsHtml = list.map((item) => {
       const name = escapeHtml(item.employeeName || '—');
       const workedMonth = formatNumber(item.workedDaysThisMonth);
@@ -378,6 +422,80 @@
     }).join('');
 
     dom.tableBody.innerHTML = rowsHtml;
+
+    // Tạo HTML danh sách thẻ cho Mobile (mặc định thu gọn, không đánh số thứ tự)
+    if (dom.mobileCardList) {
+      const cardsHtml = list.map((item) => {
+        const name = escapeHtml(item.employeeName || '—');
+        const workedMonth = formatNumber(item.workedDaysThisMonth);
+        const workedYear = formatNumber(item.workedDaysThisYear);
+        const valAbsMonth = formatNumber(item.validAbsencesThisMonth);
+        const invalAbsMonth = formatNumber(item.invalidAbsencesThisMonth);
+        const valAbsYear = formatNumber(item.validAbsencesThisYear);
+        const invalAbsYear = formatNumber(item.invalidAbsencesThisYear);
+
+        return `
+          <article class="employee-card" role="listitem">
+            <button type="button" class="employee-card-header" aria-expanded="false">
+              <span class="employee-card-name">${name}</span>
+              <span class="employee-card-toggle-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </button>
+            <div class="employee-card-body">
+              <!-- Nhóm 1: Số ngày làm -->
+              <div class="metric-group metric-group-work">
+                <div class="metric-group-title">SỐ NGÀY LÀM</div>
+                <div class="metric-group-cells">
+                  <div class="metric-cell">
+                    <span class="metric-label">Tháng này</span>
+                    <span class="metric-value ${item.workedDaysThisMonth === 0 ? 'td-num-zero' : ''}">${workedMonth}</span>
+                  </div>
+                  <div class="metric-cell">
+                    <span class="metric-label">Cả năm</span>
+                    <span class="metric-value ${item.workedDaysThisYear === 0 ? 'td-num-zero' : ''}">${workedYear}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nhóm 2: Nghỉ tháng này -->
+              <div class="metric-group metric-group-abs-month">
+                <div class="metric-group-title">NGHỈ THÁNG NÀY</div>
+                <div class="metric-group-cells">
+                  <div class="metric-cell">
+                    <span class="metric-label">Hợp lệ</span>
+                    <span class="metric-value ${item.validAbsencesThisMonth === 0 ? 'td-num-zero' : ''}">${valAbsMonth}</span>
+                  </div>
+                  <div class="metric-cell">
+                    <span class="metric-label">Không hợp lệ</span>
+                    <span class="metric-value ${item.invalidAbsencesThisMonth === 0 ? 'td-num-zero' : 'metric-value-warn'}">${invalAbsMonth}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nhóm 3: Nghỉ cả năm -->
+              <div class="metric-group metric-group-abs-year">
+                <div class="metric-group-title">NGHỈ CẢ NĂM</div>
+                <div class="metric-group-cells">
+                  <div class="metric-cell">
+                    <span class="metric-label">Hợp lệ</span>
+                    <span class="metric-value ${item.validAbsencesThisYear === 0 ? 'td-num-zero' : ''}">${valAbsYear}</span>
+                  </div>
+                  <div class="metric-cell">
+                    <span class="metric-label">Không hợp lệ</span>
+                    <span class="metric-value ${item.invalidAbsencesThisYear === 0 ? 'td-num-zero' : 'metric-value-warn'}">${invalAbsYear}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      dom.mobileCardList.innerHTML = cardsHtml;
+    }
   }
 
   /**
@@ -401,150 +519,103 @@
   }
 
   function showConfigBanner() {
-    dom.configBanner.classList.remove('hidden');
-    dom.inlineApiBaseUrlInput.value = getApiBaseUrl();
+    if (dom.configBanner) {
+      dom.configBanner.classList.remove('hidden');
+    }
   }
 
   function hideConfigBanner() {
-    dom.configBanner.classList.add('hidden');
+    if (dom.configBanner) {
+      dom.configBanner.classList.add('hidden');
+    }
+  }
+
+  /**
+   * Áp dụng ngay bộ lọc Tháng & Năm khi người dùng thay đổi lựa chọn
+   */
+  function applyMonthYearFilter() {
+    const m = parseInt(dom.filterMonth.value, 10);
+    const y = parseInt(dom.filterYear.value, 10);
+
+    if (!isNaN(m) && m >= 1 && m <= 12) {
+      state.month = m;
+    }
+    if (!isNaN(y)) {
+      state.year = y;
+    }
+
+    updateMonthDisplay();
+
+    if (state.isMockMode) {
+      state.items = getMockItems(state.year, state.month);
+      renderTable();
+    } else {
+      fetchStatistics();
+    }
   }
 
   /**
    * Thiết lập các sự kiện giao diện
    */
   function setupEvents() {
-    // Bộ lọc tháng và năm
+    // Ngăn reload trang nếu form được submit
     dom.filterForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const m = parseInt(dom.filterMonth.value, 10);
-      const y = parseInt(dom.filterYear.value, 10);
-
-      if (isNaN(m) || m < 1 || m > 12) {
-        alert('Vui lòng chọn tháng hợp lệ từ 1 đến 12.');
-        return;
-      }
-      if (isNaN(y) || y < 2000 || y > 2100) {
-        alert('Vui lòng nhập năm hợp lệ từ 2000 đến 2100.');
-        return;
-      }
-
-      state.month = m;
-      state.year = y;
-      updateMonthDisplay();
-      fetchStatistics();
+      applyMonthYearFilter();
     });
 
-    // Thay đổi tháng tự động tải lại
-    dom.filterMonth.addEventListener('change', () => {
-      state.month = parseInt(dom.filterMonth.value, 10);
-      updateMonthDisplay();
-      fetchStatistics();
-    });
-
-    // Tìm kiếm tức thì theo tên nhân viên
-    dom.filterSearch.addEventListener('input', (e) => {
-      state.searchQuery = e.target.value;
-      if (state.items.length > 0) {
-        renderTable();
-      }
-    });
-
-    // Đặt lại ô tìm kiếm
-    dom.btnResetSearch.addEventListener('click', () => {
-      dom.filterSearch.value = '';
-      state.searchQuery = '';
-      if (state.items.length > 0) {
-        renderTable();
-      }
-    });
+    // Áp dụng ngay khi đổi Tháng hoặc Năm
+    dom.filterMonth.addEventListener('change', applyMonthYearFilter);
+    dom.filterYear.addEventListener('change', applyMonthYearFilter);
 
     // Nút Thử lại trong Error State
     dom.btnRetry.addEventListener('click', () => {
       fetchStatistics();
     });
 
-    // Mở cài đặt URL từ Error State
-    dom.btnOpenConfigFromError.addEventListener('click', () => {
-      openSettingsModal();
-    });
-
-    // Nhấn tiêu đề cột để sắp xếp
-    dom.sortableHeaders.forEach((th) => {
-      th.addEventListener('click', () => {
-        const col = th.getAttribute('data-sort');
-        if (!col) return;
-
-        if (state.sortColumn === col) {
-          state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-          state.sortColumn = col;
-          // Mặc định cột chuỗi sắp xếp tăng dần, cột số sắp xếp giảm dần
-          state.sortDirection = col === 'employeeName' ? 'asc' : 'desc';
-        }
-
-        renderTable();
+    // Nút Bật dữ liệu mẫu từ Error State
+    if (dom.btnEnableMockFromError) {
+      dom.btnEnableMockFromError.addEventListener('click', () => {
+        setMockMode(true);
       });
-    });
+    }
 
-    // Form cấu hình inline trên banner
-    dom.inlineConfigForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const val = dom.inlineApiBaseUrlInput.value.trim();
-      setApiBaseUrl(val);
-      fetchStatistics();
-    });
+    // Nút công tắc Bật/Tắt dữ liệu mẫu trên Header
+    if (dom.btnToggleMockData) {
+      dom.btnToggleMockData.addEventListener('click', () => {
+        setMockMode(!state.isMockMode);
+      });
+    }
 
-    // Modal cấu hình
-    dom.btnOpenSettings.addEventListener('click', () => {
-      openSettingsModal();
-    });
+    // Nút Kết nối lại máy chủ từ thanh thông báo Dữ liệu mẫu
+    if (dom.btnRetryFromMock) {
+      dom.btnRetryFromMock.addEventListener('click', () => {
+        state.isMockMode = false;
+        syncMockToggleUI();
+        fetchStatistics();
+      });
+    }
 
-    dom.btnCloseModal.addEventListener('click', () => {
-      closeSettingsModal();
-    });
+    // Nút Tắt dữ liệu mẫu trên thanh thông báo
+    if (dom.btnDisableMockBanner) {
+      dom.btnDisableMockBanner.addEventListener('click', () => {
+        setMockMode(false);
+      });
+    }
 
-    dom.btnCancelModal.addEventListener('click', () => {
-      closeSettingsModal();
-    });
+    // Mở rộng / Thu gọn thẻ nhân viên trên Mobile
+    if (dom.mobileCardList) {
+      dom.mobileCardList.addEventListener('click', (e) => {
+        const headerBtn = e.target.closest('.employee-card-header');
+        if (!headerBtn) return;
 
-    dom.settingsModal.addEventListener('click', (e) => {
-      if (e.target === dom.settingsModal) {
-        closeSettingsModal();
-      }
-    });
+        const card = headerBtn.closest('.employee-card');
+        if (!card) return;
 
-    dom.modalConfigForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const val = dom.modalApiBaseUrlInput.value.trim();
-      setApiBaseUrl(val);
-      closeSettingsModal();
-      fetchStatistics();
-    });
-
-    // Khôi phục mặc định (xóa override runtime)
-    dom.btnResetConfig.addEventListener('click', () => {
-      setApiBaseUrl('');
-      dom.modalApiBaseUrlInput.value = getApiBaseUrl();
-      closeSettingsModal();
-      fetchStatistics();
-    });
-
-    // Đóng modal bằng phím Escape
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !dom.settingsModal.classList.contains('hidden')) {
-        closeSettingsModal();
-      }
-    });
-  }
-
-  function openSettingsModal() {
-    dom.modalApiBaseUrlInput.value = getApiBaseUrl();
-    dom.settingsModal.classList.remove('hidden');
-    dom.modalApiBaseUrlInput.focus();
-  }
-
-  function closeSettingsModal() {
-    dom.settingsModal.classList.add('hidden');
+        const isExpanded = card.classList.toggle('is-expanded');
+        headerBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      });
+    }
   }
 
   /**
@@ -555,6 +626,8 @@
     setupEvents();
 
     if (!isApiConfigured()) {
+      state.serverUnreachable = true;
+      syncMockToggleUI();
       setViewState('CONFIG_REQUIRED');
     } else {
       fetchStatistics();

@@ -23,12 +23,19 @@
         <span class="public-tag">Công khai</span>
       </div>
       <div class="header-actions">
-        <button type="button" id="btnOpenSettings" class="btn btn-secondary" title="Cấu hình địa chỉ máy chủ API">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          <span>Cấu hình API</span>
+        <!-- Sample Data Toggle Switch (Visible when server cannot be reached or mock mode is active) -->
+        <button
+          type="button"
+          id="btnToggleMockData"
+          class="mock-switch-btn hidden"
+          role="switch"
+          aria-checked="false"
+          title="Bật/tắt chế độ xem dữ liệu mẫu khi không kết nối được máy chủ"
+        >
+          <span class="mock-switch-track" aria-hidden="true">
+            <span class="mock-switch-thumb"></span>
+          </span>
+          <span class="mock-switch-label">Dữ liệu mẫu</span>
         </button>
       </div>
     </div>
@@ -36,7 +43,8 @@
 
   <!-- Main Content -->
   <main class="main-content">
-    <!-- Configuration Guide Banner (Visible when API URL is not set) -->
+    <!-- Configuration Guide Banner (Visible when API URL is not set in config.js) -->
+    <!-- Endpoint: /api/public/attendance-statistics (PUBLIC_ATTENDANCE_API_BASE_URL) -->
     <section id="configBanner" class="config-card hidden" aria-live="polite">
       <div class="config-header">
         <h2 class="config-title">
@@ -49,20 +57,8 @@
         </h2>
       </div>
       <p class="config-desc">
-        Để tải dữ liệu thực tế từ hệ thống, vui lòng nhập địa chỉ máy chủ backend hoặc cập nhật file <code>config.js</code>.
+        Để tải dữ liệu thực tế từ hệ thống, vui lòng cập nhật giá trị <code>apiBaseUrl</code> trong file <code>config.js</code>.
       </p>
-      <form id="inlineConfigForm" class="config-form">
-        <div class="config-input-wrap">
-          <input
-            type="url"
-            id="inlineApiBaseUrlInput"
-            class="input"
-            placeholder="ví dụ: http://localhost:18080"
-            required
-          />
-        </div>
-        <button type="submit" class="btn btn-primary">Lưu & Tải dữ liệu</button>
-      </form>
     </section>
 
     <!-- Filters & Actions Card -->
@@ -88,54 +84,40 @@
 
         <div class="filter-group filter-group-year">
           <label for="filterYear" class="label">Năm</label>
-          <input
-            type="number"
-            id="filterYear"
-            class="input"
-            min="2000"
-            max="2100"
-            step="1"
-            required
-            aria-label="Nhập năm"
-          />
-        </div>
-
-        <div class="filter-group filter-group-search">
-          <label for="filterSearch" class="label">Tìm kiếm nhân viên</label>
-          <input
-            type="text"
-            id="filterSearch"
-            class="input"
-            placeholder="Lọc theo họ và tên nhân viên..."
-            aria-label="Tìm kiếm theo họ tên"
-          />
-        </div>
-
-        <div class="filter-actions">
-          <button type="submit" id="btnSubmitFilter" class="btn btn-primary">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <span>Xem thống kê</span>
-          </button>
-          <button type="button" id="btnResetSearch" class="btn btn-ghost" title="Xóa bộ lọc tìm kiếm">
-            <span>Đặt lại</span>
-          </button>
+          <select id="filterYear" class="select" aria-label="Chọn năm">
+            <!-- Populated dynamically by app.js: current year first, up to +5 years -->
+          </select>
         </div>
       </form>
     </section>
 
-    <!-- Table Container Card -->
-    <section class="card" style="padding: 16px 20px;">
+    <!-- Table & Mobile Cards Container Card -->
+    <section class="card data-card">
       <!-- Month indicator matching mockup header: "Tháng: 8/2026" -->
       <div class="month-indicator-bar">
         <div class="month-indicator-text">
           <span>Tháng:</span>
           <span id="currentMonthDisplay" class="month-badge">—/—</span>
+          <span id="mockStatusBadge" class="mock-badge hidden">Dữ liệu mẫu</span>
         </div>
         <div class="records-count">
           <span id="recordCountText">Đang sẵn sàng...</span>
+        </div>
+      </div>
+
+      <!-- Mock Data Active Notice Banner -->
+      <div id="mockModeBanner" class="mock-banner hidden" role="status" aria-live="polite">
+        <div class="mock-banner-info">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>Đang hiển thị <strong>dữ liệu mẫu</strong> do không thể kết nối đến máy chủ.</span>
+        </div>
+        <div class="mock-banner-actions">
+          <button type="button" id="btnRetryFromMock" class="btn btn-secondary btn-sm">Kết nối lại máy chủ</button>
+          <button type="button" id="btnDisableMockBanner" class="btn btn-ghost btn-sm">Tắt dữ liệu mẫu</button>
         </div>
       </div>
 
@@ -154,10 +136,12 @@
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
         <p id="errorMessageTitle" class="state-title">Không thể tải dữ liệu thống kê</p>
-        <p id="errorMessageDesc" class="state-desc">Vui lòng kiểm tra lại địa chỉ máy chủ API hoặc kết nối mạng.</p>
-        <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <p id="errorMessageDesc" class="state-desc">Vui lòng kiểm tra lại kết nối mạng hoặc bật chế độ xem dữ liệu mẫu.</p>
+        <div class="state-actions">
           <button type="button" id="btnRetry" class="btn btn-primary">Thử lại</button>
-          <button type="button" id="btnOpenConfigFromError" class="btn btn-secondary">Kiểm tra URL API</button>
+          <button type="button" id="btnEnableMockFromError" class="btn btn-secondary">
+            <span>Bật dữ liệu mẫu</span>
+          </button>
         </div>
       </div>
 
@@ -173,17 +157,14 @@
         <p id="emptyMessageDesc" class="state-desc">Không tìm thấy bản ghi chấm công nào phù hợp với thời gian đã chọn.</p>
       </div>
 
-      <!-- Responsive Two-Tier Table -->
-      <div id="tableWrapper" class="table-responsive" style="margin-top: 14px;">
+      <!-- Desktop Two-Tier Table (Hidden on Mobile) -->
+      <div id="tableWrapper" class="table-responsive hidden">
         <table class="stats-table" aria-label="Bảng thống kê số ngày làm và số ngày nghỉ của nhân viên">
           <thead>
             <!-- Tier 1 Headers -->
             <tr>
-              <th rowspan="2" class="th-name sortable-th" data-sort="employeeName" aria-sort="none" title="Nhấn để sắp xếp theo Tên">
-                <span class="th-inner">
-                  <span>Tên</span>
-                  <span class="sort-icon" aria-hidden="true">⇅</span>
-                </span>
+              <th rowspan="2" class="th-name">
+                Tên
               </th>
               <th colspan="2" class="th-group-work">
                 SỐ NGÀY LÀM
@@ -197,41 +178,23 @@
             </tr>
             <!-- Tier 2 Headers -->
             <tr>
-              <th class="th-sub-work sortable-th" data-sort="workedDaysThisMonth" aria-sort="none" title="Nhấn để sắp xếp theo số ngày làm tháng này">
-                <span class="th-inner">
-                  <span>Tháng này</span>
-                  <span class="sort-icon" aria-hidden="true">⇅</span>
-                </span>
+              <th class="th-sub-work">
+                Tháng này
               </th>
-              <th class="th-sub-work sortable-th" data-sort="workedDaysThisYear" aria-sort="none" title="Nhấn để sắp xếp theo số ngày làm cả năm">
-                <span class="th-inner">
-                  <span>Cả năm</span>
-                  <span class="sort-icon" aria-hidden="true">⇅</span>
-                </span>
+              <th class="th-sub-work">
+                Cả năm
               </th>
-              <th class="th-sub-abs-month sortable-th" data-sort="validAbsencesThisMonth" aria-sort="none" title="Nhấn để sắp xếp theo nghỉ hợp lệ tháng này">
-                <span class="th-inner">
-                  <span>Hợp lệ</span>
-                  <span class="sort-icon" aria-hidden="true">⇅</span>
-                </span>
+              <th class="th-sub-abs-month">
+                Hợp lệ
               </th>
-              <th class="th-sub-abs-month sortable-th" data-sort="invalidAbsencesThisMonth" aria-sort="none" title="Nhấn để sắp xếp theo nghỉ không hợp lệ tháng này">
-                <span class="th-inner">
-                  <span>Không hợp lệ</span>
-                  <span class="sort-icon" aria-hidden="true">⇅</span>
-                </span>
+              <th class="th-sub-abs-month">
+                Không hợp lệ
               </th>
-              <th class="th-sub-abs-year sortable-th" data-sort="validAbsencesThisYear" aria-sort="none" title="Nhấn để sắp xếp theo nghỉ hợp lệ cả năm">
-                <span class="th-inner">
-                  <span>Hợp lệ</span>
-                  <span class="sort-icon" aria-hidden="true">⇅</span>
-                </span>
+              <th class="th-sub-abs-year">
+                Hợp lệ
               </th>
-              <th class="th-sub-abs-year sortable-th" data-sort="invalidAbsencesThisYear" aria-sort="none" title="Nhấn để sắp xếp theo nghỉ không hợp lệ cả năm">
-                <span class="th-inner">
-                  <span>Không hợp lệ</span>
-                  <span class="sort-icon" aria-hidden="true">⇅</span>
-                </span>
+              <th class="th-sub-abs-year">
+                Không hợp lệ
               </th>
             </tr>
           </thead>
@@ -240,47 +203,15 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Mobile Card View (Visible only on Mobile) -->
+      <div id="mobileCardsWrapper" class="mobile-cards-wrapper hidden">
+        <div id="mobileCardList" class="mobile-card-list" role="list" aria-label="Danh sách thẻ thống kê chấm công nhân viên">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </div>
     </section>
   </main>
-
-  <!-- Settings Modal (Quick API Config) -->
-  <div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3 id="settingsModalTitle" class="modal-title">Cấu hình kết nối API máy chủ</h3>
-        <button type="button" id="btnCloseModal" class="modal-close" aria-label="Đóng cửa sổ">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-      <form id="modalConfigForm">
-        <div class="modal-body">
-          <div>
-            <label for="modalApiBaseUrlInput" class="label">PUBLIC_ATTENDANCE_API_BASE_URL</label>
-            <input
-              type="url"
-              id="modalApiBaseUrlInput"
-              class="input"
-              placeholder="http://localhost:18080"
-            />
-            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.4;">
-              URL của máy chủ cung cấp endpoint <code>/api/public/attendance-statistics</code>. Cấu hình mặc định lấy từ <code>config.js</code> hoặc nhập trực tiếp tại đây.
-            </p>
-          </div>
-          <div style="background-color: var(--bg-app); border: 1px solid var(--border); border-radius: var(--radius-control); padding: 10px 12px; font-size: 12px;">
-            <strong>Mẹo:</strong> Bạn có thể cấu hình trực tiếp giá trị <code>apiBaseUrl</code> trong file <code>config.js</code>.
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" id="btnResetConfig" class="btn btn-ghost">Khôi phục mặc định</button>
-          <button type="button" id="btnCancelModal" class="btn btn-secondary">Hủy</button>
-          <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-        </div>
-      </form>
-    </div>
-  </div> 
 
   <!-- Application Logic -->
   <script src="app.js"></script>

@@ -177,6 +177,10 @@ body {
   padding: 20px;
 }
 
+.data-card {
+  padding: 16px 20px;
+}
+
 /* Config Banner / Setup Guide */
 .config-card {
   background-color: #ffffff;
@@ -207,6 +211,10 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.config-title svg {
+  flex-shrink: 0;
 }
 
 .config-desc {
@@ -334,33 +342,27 @@ body {
   flex-direction: column;
 }
 
-.filter-group-month {
-  width: 150px;
-}
-
+.filter-group-month,
 .filter-group-year {
-  width: 110px;
+  width: 160px;
 }
 
-.filter-group-search {
-  flex: 1;
-  min-width: 200px;
-}
-
-.filter-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Current Month Callout (per mockup "Tháng: 8/2026") */
+/* Current Month Callout (per mockup "Tháng: 8/2026") - Sticky below header on scroll */
 .month-indicator-bar {
+  position: sticky;
+  top: 56px;
+  z-index: 15;
+  background-color: var(--bg-surface);
+  margin: -16px -20px 0 -20px;
+  padding: 12px 20px;
+  border-top-left-radius: var(--radius-card);
+  border-top-right-radius: var(--radius-card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
 }
 
 .month-indicator-text {
@@ -390,6 +392,7 @@ body {
 /* Table Responsive Wrapper */
 .table-responsive {
   width: 100%;
+  margin-top: 14px;
   overflow-x: auto;
   border: 1px solid var(--border-table);
   border-radius: var(--radius-control);
@@ -470,43 +473,6 @@ body {
   color: #171717 !important;
 }
 
-/* Sortable Column Header Buttons */
-.sortable-th {
-  cursor: pointer;
-  user-select: none;
-  transition: filter 120ms ease;
-  position: relative;
-}
-
-.sortable-th:hover {
-  filter: brightness(0.95);
-}
-
-.th-inner {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 100%;
-}
-
-.sort-icon {
-  font-size: 11px;
-  opacity: 0.45;
-  transition: opacity 120ms ease, transform 120ms ease;
-}
-
-.sortable-th:hover .sort-icon {
-  opacity: 0.85;
-}
-
-.sortable-th[aria-sort="ascending"] .sort-icon,
-.sortable-th[aria-sort="descending"] .sort-icon {
-  opacity: 1;
-  color: #000000;
-  font-weight: bold;
-}
-
 /* Data Rows */
 .stats-table tbody tr {
   transition: background-color 100ms ease;
@@ -557,6 +523,7 @@ body {
 
 /* States: Loading, Error, Empty */
 .state-box {
+  margin-top: 14px;
   padding: 48px 24px;
   text-align: center;
   display: flex;
@@ -567,6 +534,15 @@ body {
   background-color: #ffffff;
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
+}
+
+.state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .spinner {
@@ -604,117 +580,494 @@ body {
   color: var(--semantic-danger-text);
 }
 
-/* Settings Modal */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  z-index: 50;
+/* =============================================================================
+ * Sample Data (Mock Mode) Toggle Switch, Badge & Notice Banner
+ * ============================================================================= */
+.mock-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  outline: none;
+  user-select: none;
+}
+
+.mock-switch-btn:hover {
+  background-color: var(--bg-hover);
+}
+
+.mock-switch-btn:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.mock-switch-btn.is-active {
+  background-color: var(--semantic-warning-bg);
+  border-color: #f59e0b;
+  color: var(--semantic-warning-text);
+}
+
+.mock-switch-track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background-color: #cbd5e1;
+  border-radius: 999px;
+  transition: background-color 160ms ease;
+  flex-shrink: 0;
+}
+
+.mock-switch-btn.is-active .mock-switch-track {
+  background-color: #f59e0b;
+}
+
+.mock-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 160ms ease;
+}
+
+.mock-switch-btn.is-active .mock-switch-thumb {
+  transform: translateX(14px);
+}
+
+.mock-switch-label {
+  white-space: nowrap;
+}
+
+.mock-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: var(--radius-badge);
+  background-color: var(--semantic-warning-bg);
+  color: var(--semantic-warning-text);
+  border: 1px solid #fcd34d;
+}
+
+.mock-banner {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background-color: var(--semantic-warning-bg);
+  border: 1px solid #fde68a;
+  border-left: 4px solid #f59e0b;
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mock-banner-info {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 16px;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--semantic-warning-text);
+  line-height: 1.4;
 }
 
-.modal-backdrop.hidden {
-  display: none !important;
+.mock-banner-info svg {
+  flex-shrink: 0;
 }
 
-.modal-dialog {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-overlay);
-  width: 100%;
-  max-width: 520px;
-  padding: 24px;
+.mock-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* =============================================================================
+ * Mobile Card View (Hidden on Desktop > 768px)
+ * ============================================================================= */
+.mobile-cards-wrapper {
+  display: none;
+}
+
+.mobile-card-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
-.modal-header {
+.employee-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-table);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.employee-card-header {
+  width: 100%;
+  background-color: var(--cell-name-bg);
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 12px;
-}
-
-.modal-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.modal-close {
-  background: none;
-  border: none;
+  gap: 10px;
   cursor: pointer;
-  color: var(--text-secondary);
-  padding: 4px;
-  border-radius: 4px;
+  font-family: inherit;
+  text-align: left;
+  transition: background-color 120ms ease;
+  outline: none;
 }
 
-.modal-close:hover {
-  background-color: var(--bg-hover);
+.employee-card-header:hover {
+  background-color: #e2e8f0;
+}
+
+.employee-card-header:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.employee-card.is-expanded .employee-card-header {
+  border-bottom-color: var(--border-table);
+}
+
+.employee-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.employee-card-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: transform 180ms ease, color 120ms ease;
+}
+
+.employee-card.is-expanded .employee-card-toggle-icon {
+  transform: rotate(180deg);
   color: var(--text-primary);
 }
 
-.modal-body {
+.employee-card-body {
+  display: none;
+  grid-template-columns: 1fr;
+}
+
+.employee-card.is-expanded .employee-card-body {
+  display: grid;
+}
+
+.metric-group {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  font-size: 13px;
+  border-bottom: 1px solid var(--border-table);
+}
+
+.metric-group:last-child {
+  border-bottom: none;
+}
+
+.metric-group-title {
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #171717;
+  border-bottom: 1px solid var(--border-cell);
+}
+
+.metric-group-work .metric-group-title {
+  background-color: var(--header-work-main);
+}
+
+.metric-group-abs-month .metric-group-title {
+  background-color: var(--header-abs-month-main);
+}
+
+.metric-group-abs-year .metric-group-title {
+  background-color: var(--header-abs-year-main);
+}
+
+.metric-group-cells {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.metric-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-right: 1px solid var(--border-cell);
+}
+
+.metric-cell:last-child {
+  border-right: none;
+}
+
+.metric-group-work .metric-cell {
+  background-color: #f8fef9;
+}
+
+.metric-group-abs-month .metric-cell {
+  background-color: #fffef5;
+}
+
+.metric-group-abs-year .metric-cell {
+  background-color: #fffaf5;
+}
+
+.metric-label {
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--text-body);
 }
 
-.modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+.metric-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Responsive adjustments */
-@media (max-width: 640px) {
+.metric-value.td-num-zero {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.metric-value-warn {
+  color: var(--semantic-danger-text);
+}
+
+/* =============================================================================
+ * Responsive Breakpoints (Mobile & Tablet Optimization)
+ * ============================================================================= */
+
+/* On Mobile & Small Tablets (<= 768px): Hide horizontal table, show Card View */
+@media (max-width: 768px) {
+  .table-responsive {
+    display: none !important;
+  }
+
+  .mobile-cards-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
   .main-content {
-    padding: 16px 12px;
+    padding: 14px 12px 24px;
     gap: 14px;
   }
 
-  .filter-form {
-    gap: 10px;
+  .card,
+  .data-card {
+    padding: 14px 12px;
   }
 
-  .filter-group-month,
+  /* Filter Form: 2-column grid so Month & Year sit side-by-side */
+  .filter-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: end;
+  }
+
+  .filter-group-month {
+    grid-column: 1 / 2;
+    width: 100%;
+  }
+
   .filter-group-year {
+    grid-column: 2 / 3;
     width: 100%;
   }
 
   .filter-actions {
+    grid-column: 1 / -1;
     width: 100%;
+    margin-top: 2px;
   }
 
   .filter-actions .btn {
-    flex: 1;
+    width: 100%;
   }
 
-  .stats-table th,
-  .stats-table td {
-    padding: 8px 8px;
+  /* Prevent iOS Safari zoom on input focus (16px font-size) & increase touch target */
+  .input,
+  .select {
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .btn {
+    height: 40px;
+    font-size: 13.5px;
+  }
+
+  .btn-sm {
+    height: 34px;
     font-size: 12.5px;
   }
 
-  .th-name {
-    width: 140px;
-    min-width: 130px;
-    font-size: 13px !important;
+  /* Config Banner & Mock Banner on mobile */
+  .config-card {
+    padding: 14px 12px;
   }
 
-  .td-name {
-    padding-left: 8px !important;
+  .config-title {
+    align-items: flex-start;
+    font-size: 13.5px;
+    line-height: 1.4;
+  }
+
+  .config-title svg {
+    margin-top: 2px;
+  }
+
+  .mock-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 12px;
+  }
+
+  .mock-banner-info {
+    align-items: flex-start;
+  }
+
+  .mock-banner-info svg {
+    margin-top: 2px;
+  }
+
+  .mock-banner-actions {
+    width: 100%;
+  }
+
+  .mock-banner-actions .btn {
+    flex: 1;
+  }
+
+  .mock-banner-actions .btn-ghost {
+    border: 1px solid #fcd34d;
+    background-color: #ffffff;
+  }
+
+  /* Month indicator bar (sticky below header on mobile) */
+  .month-indicator-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: -14px -12px 0 -12px;
+    padding: 10px 12px;
+  }
+
+  .month-indicator-text {
+    font-size: 15px;
+    flex-wrap: wrap;
+  }
+
+  .records-count {
+    font-size: 12.5px;
+  }
+
+  /* States on mobile */
+  .state-box {
+    padding: 32px 16px;
+  }
+
+  .state-actions {
+    width: 100%;
+  }
+
+  .state-actions .btn {
+    flex: 1;
+    min-width: 130px;
   }
 }
+
+/* Medium mobile / Phablet (540px - 768px): 3-column metric groups inside each card */
+@media (min-width: 540px) and (max-width: 768px) {
+  .employee-card-body {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .metric-group {
+    border-bottom: none;
+    border-right: 1px solid var(--border-table);
+  }
+
+  .metric-group:last-child {
+    border-right: none;
+  }
+
+  .metric-cell {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 2px;
+    padding: 8px 6px;
+  }
+}
+
+/* Narrow mobile phones (<= 480px): Header adjustments */
+@media (max-width: 480px) {
+  .header-container {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .brand-section {
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .brand-title {
+    font-size: 14.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .public-tag {
+    display: none;
+  }
+
+  .mock-switch-btn {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+    gap: 6px;
+  }
+}
+
+

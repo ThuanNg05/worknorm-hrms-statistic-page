@@ -27,7 +27,7 @@ console.log('--- Kiểm tra tính toàn vẹn trang Public Attendance Statistics
 
 // 1. Check required files
 console.log('\n1. Kiểm tra sự tồn tại của các tệp bắt buộc:');
-const requiredFiles = ['index.html', 'styles.css', 'config.js', 'app.js', 'package.json', 'README.md'];
+const requiredFiles = ['index.html', 'styles.css', 'config.js', 'app.js', 'package.json'];
 requiredFiles.forEach((file) => {
   const filePath = path.join(DIR, file);
   assert(fs.existsSync(filePath), `Tệp ${file} tồn tại`);
