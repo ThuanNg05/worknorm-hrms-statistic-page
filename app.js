@@ -383,11 +383,6 @@
   function renderTable() {
     const list = state.items;
 
-    // Cập nhật nhãn số lượng nhân viên
-    const total = list.length;
-    const suffix = state.isMockMode ? ' (Mẫu)' : '';
-    dom.recordCountText.textContent = `Tổng số ${total} nhân viên${suffix}`;
-
     if (list.length === 0) {
       setViewState('EMPTY');
       return;
