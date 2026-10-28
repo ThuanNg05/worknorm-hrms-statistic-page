@@ -194,7 +194,7 @@
     switch (viewState) {
       case 'LOADING':
         dom.stateLoading.classList.remove('hidden');
-        dom.recordCountText.textContent = 'Đang tải dữ liệu...';
+        dom.recordCountText.textContent = '';
         break;
 
       case 'DATA':
